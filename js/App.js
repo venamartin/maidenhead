@@ -7,7 +7,7 @@ class App {
         // Register the Service Worker
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/sw.js');
+                const registration = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered successfully:', registration.scope);
                 document.getElementById('status').innerText = "Maidenhead Ready.\nInstall from Share Menu (iOS) or Prompt (Android).";
             } catch (error) {

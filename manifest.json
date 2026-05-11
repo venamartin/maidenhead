@@ -1,19 +1,19 @@
 {
     "name": "Maidenhead Grid Tracker",
     "short_name": "Maidenhead",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#121212",
     "theme_color": "#121212",
     "orientation": "portrait",
     "icons": [
         {
-            "src": "/icon-192.png",
+            "src": "icon-192.png",
             "type": "image/png",
             "sizes": "192x192"
         },
         {
-            "src": "/icon-512.png",
+            "src": "icon-512.png",
             "type": "image/png",
             "sizes": "512x512"
         }
