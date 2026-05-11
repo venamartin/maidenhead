@@ -1,11 +1,13 @@
 /**
- * Leaflet Map Controller with Custom SQLite Tile Layer.
+ * Leaflet Map Controller
  */
 export class MapController {
     constructor(dbEngine) {
         this.dbEngine = dbEngine;
         this.map = null;
         this.userMarker = null;
+        this.sqliteLayer = null;
+        this.onlineLayer = null;
     }
 
     /**
@@ -26,12 +28,47 @@ export class MapController {
         this.onlineLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
 
         // 2. Add custom SQLite Layer (Main Offline Layer)
-        console.log('Adding SQLite tile layer...');
-        this.sqliteLayer = new L.SqliteTileLayer(this.dbEngine, {
-            minZoom: 1,
-            maxZoom: 15,
-            zIndex: 10
+        console.log('Adding SQLite tile layer using HTRX bit-packing formula...');
+        
+        const self = this;
+        L.SqliteTileLayer = L.TileLayer.extend({
+            createTile: function (coords, done) {
+                const tile = document.createElement('img');
+                const { z, x, y } = coords;
+
+                // THE HTRX FORMULA: index = (((z << z) + x) << z) + y
+                // Note: JS bitwise operators are 32-bit, but for Z > 10 we might exceed that.
+                // We'll use BigInt to ensure we don't lose precision for high zoom levels.
+                const bZ = BigInt(z);
+                const bX = BigInt(x);
+                const bY = BigInt(y);
+                const key = (((bZ << bZ) + bX) << bZ) + bY;
+
+                if (!self.dbEngine.db) {
+                    done(null, tile);
+                    return tile;
+                }
+
+                self.dbEngine.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key.toString()])
+                    .then(rows => {
+                        if (rows && rows.length > 0) {
+                            const blob = rows[0][0];
+                            const url = URL.createObjectURL(new Blob([blob], { type: 'image/png' }));
+                            tile.src = url;
+                            tile.onload = () => URL.revokeObjectURL(url);
+                        }
+                        done(null, tile);
+                    })
+                    .catch(err => {
+                        console.error("Tile fetch error:", err);
+                        done(null, tile);
+                    });
+
+                return tile;
+            }
         });
+
+        this.sqliteLayer = new L.SqliteTileLayer();
         this.sqliteLayer.addTo(this.map);
 
         // Add User Marker
@@ -55,84 +92,12 @@ export class MapController {
     }
 
     /**
-     * Update the map center and user marker.
+     * Update user position and center map.
      */
-    updatePosition(lat, lon) {
+    updatePosition(lat, lng) {
         if (!this.map) return;
-        
-        const pos = [lat, lon];
+        const pos = [lat, lng];
         this.userMarker.setLatLng(pos);
-        this.map.panTo(pos, { animate: true });
+        this.map.setView(pos);
     }
 }
-
-/**
- * Custom Leaflet Layer for fetching tiles from SQLite.
- */
-L.SqliteTileLayer = L.TileLayer.extend({
-    initialize: function (dbEngine, options) {
-        this.dbEngine = dbEngine;
-        L.TileLayer.prototype.initialize.call(this, "", options);
-    },
-
-    createTile: function (coords, done) {
-        const tile = document.createElement('img');
-        
-        // Linear Quadtree Key calculation
-        const z = coords.z;
-        const x = coords.x;
-        const y = coords.y;
-
-        // Offset for this zoom level in the linear pyramid
-        const offset = (Math.pow(4, z) - 1) / 3;
-        
-        // Try multiple common indexing patterns
-        const patterns = [
-            { name: 'Standard', i: this._encodeMorton(x, y) },
-            { name: 'TMS (Inverted Y)', i: this._encodeMorton(x, Math.pow(2, z) - 1 - y) },
-            { name: 'Swapped (Y,X)', i: this._encodeMorton(y, x) }
-        ];
-
-        if (!this.dbEngine.db) {
-            done(null, tile);
-            return tile;
-        }
-
-        // Try to find the tile using the patterns
-        this._findTile(patterns, offset, tile, done);
-        return tile;
-    },
-
-    async _findTile(patterns, offset, tile, done) {
-        for (const pattern of patterns) {
-            const key = offset + pattern.i;
-            try {
-                const rows = await this.dbEngine.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key]);
-                if (rows && rows.length > 0) {
-                    console.log(`MATCH FOUND! Pattern: ${pattern.name}, Key: ${key}`);
-                    const blob = rows[0][0];
-                    const url = URL.createObjectURL(new Blob([blob], { type: 'image/png' }));
-                    tile.src = url;
-                    tile.onload = () => URL.revokeObjectURL(url);
-                    done(null, tile);
-                    return;
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-        // No match found
-        done(null, tile);
-    },
-
-    /**
-     * Interleaves bits of x and y to create a Morton code.
-     */
-    _encodeMorton: function(x, y) {
-        let res = 0;
-        for (let i = 0; i < 16; i++) {
-            res |= (x & (1 << i)) << i | (y & (1 << i)) << (i + 1);
-        }
-        return res;
-    }
-});
