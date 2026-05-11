@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Prevents pinch-zoom and makes it fill the screen -->
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- iOS Specific PWA Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Maidenhead">
+
+    <title>Maidenhead - Grid Tracker</title>
+
+    <!-- Link to the Web App Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            /* Prevents bounce scrolling */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 id="status">Booting Maidenhead...</h1>
+
+    <!-- Import the main orchestrator as an ES6 Module -->
+    <script type="module" src="/js/App.js"></script>
+
+</body>
+
+</html>
