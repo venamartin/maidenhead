@@ -84,5 +84,61 @@ export class Maidenhead {
             minLon: lon,
             maxLon: lon + 2
         };
+    /**
+     * Convert a Maidenhead locator to Latitude/Longitude (center of the square).
+     * @param {string} locator 
+     * @returns {Array|null} [lat, lng]
+     */
+    static toCoordinates(locator) {
+        if (!locator || locator.length < 2) return null;
+        
+        locator = locator.toUpperCase().replace(/\s/g, '');
+        
+        let lng = -180;
+        let lat = -90;
+
+        // 1. Fields (Pairs 1-2: letters)
+        lng += (locator.charCodeAt(0) - 65) * 20;
+        lat += (locator.charCodeAt(1) - 65) * 10;
+
+        if (locator.length >= 4) {
+            // 2. Squares (Pairs 3-4: numbers)
+            lng += parseInt(locator[2]) * 2;
+            lat += parseInt(locator[3]) * 1;
+        }
+
+        if (locator.length >= 6) {
+            // 3. Subsquares (Pairs 5-6: letters)
+            lng += (locator.charCodeAt(4) - 65) * (2 / 24);
+            lat += (locator.charCodeAt(5) - 65) * (1 / 24);
+            
+            // Move to center of the 6-char square
+            if (locator.length === 6) {
+                lng += (1 / 24);
+                lat += (0.5 / 24);
+            }
+        }
+
+        if (locator.length >= 8) {
+            // 4. Extended (Pairs 7-8: numbers)
+            lng += parseInt(locator[6]) * (2 / 240);
+            lat += parseInt(locator[7]) * (1 / 240);
+
+            if (locator.length === 8) {
+                lng += (1 / 240);
+                lat += (0.5 / 240);
+            }
+        }
+
+        if (locator.length >= 10) {
+            // 5. Sub-extended (Pairs 9-10: letters)
+            lng += (locator.charCodeAt(8) - 65) * (2 / 5760);
+            lat += (locator.charCodeAt(9) - 65) * (1 / 5760);
+            
+            lng += (1 / 5760);
+            lat += (0.5 / 5760);
+        }
+
+        return [lat, lng];
     }
 }

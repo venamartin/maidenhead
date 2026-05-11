@@ -92,6 +92,32 @@ export class MapController {
     }
 
     /**
+     * Update a SAG vehicle marker.
+     */
+    updateSagMarker(id, lat, lng, color) {
+        if (!this.map) return;
+        if (!this.sagMarkers) this.sagMarkers = {};
+
+        if (this.sagMarkers[id]) {
+            this.sagMarkers[id].setLatLng([lat, lng]);
+        } else {
+            const icon = L.divIcon({
+                className: 'sag-marker',
+                html: `<div style="background: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: white; box-shadow: 0 0 10px ${color};">${id.replace('SAG','')}</div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+            this.sagMarkers[id] = L.marker([lat, lng], { icon }).addTo(this.map);
+            this.sagMarkers[id].bindTooltip(id, { 
+                permanent: true, 
+                direction: 'top',
+                className: 'sag-tooltip',
+                offset: [0, -10]
+            });
+        }
+    }
+
+    /**
      * Update user position and center map.
      */
     updatePosition(lat, lng) {

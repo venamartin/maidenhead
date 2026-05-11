@@ -181,6 +181,58 @@
             display: block;
             width: 0;
         }
+            #sag-card {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            width: 320px;
+            z-index: 100;
+        }
+
+        .sag-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        #sag-select {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            flex: 1;
+        }
+
+        #sag-grid {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100px;
+            text-transform: uppercase;
+        }
+
+        #sag-update {
+            background: #0A84FF;
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #sag-update:active {
+            background: #007AFF;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            #grid-card { top: 10px; left: 10px; right: 10px; width: auto; }
+            #sag-card { left: 10px; right: 10px; width: auto; bottom: 50px; }
+        }
     </style>
 </head>
 
@@ -188,11 +240,23 @@
 
     <div id="map"></div>
 
-    <div id="overlay">
-        <div class="grid-card">
-            <div id="grid-text">LOCATING...</div>
-            <div id="phonetic-text">WAITING FOR GPS</div>
+    <!-- Maidenhead Overlay -->
+    <div id="grid-card" class="glass-card">
+        <div id="grid-text">LOCATING...</div>
+        <div id="phonetic-text">WAITING FOR GPS</div>
+    </div>
+
+    <!-- SAG Vehicle Entry -->
+    <div id="sag-card" class="glass-card">
+        <div class="card-header" style="font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">SAG VEHICLE ENTRY</div>
+        <div class="sag-form">
+            <select id="sag-select">
+                <!-- Will be populated by JS -->
+            </select>
+            <input type="text" id="sag-grid" placeholder="GRID" maxlength="10">
+            <button id="sag-update">PLOT</button>
         </div>
+    </div>
     </div>
 
     <div id="status-bar">

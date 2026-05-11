@@ -18,6 +18,18 @@ class App {
         this.updateStatus("Booting Map...");
 
         // Setup Online Toggle
+        const toggle = document.getElementById('online-toggle');
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                this.isOnline = !this.isOnline;
+                this.mapController.toggleOnline(this.isOnline);
+                toggle.innerText = this.isOnline ? "Go Offline" : "Go Online";
+                toggle.style.background = this.isOnline ? "rgba(10, 132, 255, 0.3)" : "rgba(255,255,255,0.1)";
+            });
+        }
+
+        // Setup SAG Tracker
+        this.setupSagTracker();
 
         // Background Service Worker registration
         if ('serviceWorker' in navigator) {
@@ -28,6 +40,9 @@ class App {
         try {
             this.mapController.init('map');
             this.updateStatus("Map Ready. Locating...");
+            
+            // Restore any saved SAG markers
+            this.restoreSagMarkers();
         } catch (err) {
             console.error("Map init error:", err);
             this.updateStatus("Map Error: " + err.message);
@@ -40,6 +55,61 @@ class App {
         this.initOfflineEngine();
         
         this.checkIosInstall();
+    }
+
+    setupSagTracker() {
+        const select = document.getElementById('sag-select');
+        const gridInput = document.getElementById('sag-grid');
+        const updateBtn = document.getElementById('sag-update');
+
+        if (!select || !gridInput || !updateBtn) return;
+
+        // Populate Dropdown
+        for (let i = 1; i <= 20; i++) {
+            const opt = document.createElement('option');
+            opt.value = `SAG${i}`;
+            opt.innerText = `SAG ${i}`;
+            select.appendChild(opt);
+        }
+
+        // Handle Plot Button
+        updateBtn.addEventListener('click', () => {
+            const id = select.value;
+            const grid = gridInput.value.trim();
+            if (!grid) return;
+
+            const coords = Maidenhead.toCoordinates(grid);
+            if (coords) {
+                const [lat, lng] = coords;
+                const positions = JSON.parse(localStorage.getItem('sagPositions') || '{}');
+                positions[id] = { lat, lng, grid };
+                localStorage.setItem('sagPositions', JSON.stringify(positions));
+                
+                this.mapController.updateSagMarker(id, lat, lng, this.getSagColor(id));
+                this.updateStatus(`${id} plotted at ${grid}`);
+                gridInput.value = '';
+            } else {
+                alert("Invalid Grid Format. Use e.g. CM96dw");
+            }
+        });
+    }
+
+    restoreSagMarkers() {
+        const positions = JSON.parse(localStorage.getItem('sagPositions') || '{}');
+        Object.entries(positions).forEach(([id, data]) => {
+            this.mapController.updateSagMarker(id, data.lat, data.lng, this.getSagColor(id));
+        });
+    }
+
+    getSagColor(id) {
+        const colors = [
+            '#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', 
+            '#007AFF', '#5856D6', '#FF2D55', '#AF52DE', '#8E8E93',
+            '#FF375F', '#FFD60A', '#30D158', '#64D2FF', '#0A84FF',
+            '#BF5AF2', '#FF64D2', '#5E5CE6', '#98989D', '#636366'
+        ];
+        const num = parseInt(id.replace('SAG','')) - 1;
+        return colors[num % colors.length];
     }
 
     async initOfflineEngine() {
