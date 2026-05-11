@@ -148,4 +148,4 @@ class App {
 }
 
 // Boot the application
-new App();
+window.app = new App();

@@ -86,36 +86,43 @@ L.SqliteTileLayer = L.TileLayer.extend({
         // Offset for this zoom level in the linear pyramid
         const offset = (Math.pow(4, z) - 1) / 3;
         
-        // Morton encoding (Interleave bits of X and Y)
-        const i = this._encodeMorton(x, y);
-        const key = offset + i;
+        // Try multiple common indexing patterns
+        const patterns = [
+            { name: 'Standard', i: this._encodeMorton(x, y) },
+            { name: 'TMS (Inverted Y)', i: this._encodeMorton(x, Math.pow(2, z) - 1 - y) },
+            { name: 'Swapped (Y,X)', i: this._encodeMorton(y, x) }
+        ];
 
         if (!this.dbEngine.db) {
             done(null, tile);
             return tile;
         }
 
-        this.dbEngine.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key])
-            .then(rows => {
+        // Try to find the tile using the patterns
+        this._findTile(patterns, offset, tile, done);
+        return tile;
+    },
+
+    async _findTile(patterns, offset, tile, done) {
+        for (const pattern of patterns) {
+            const key = offset + pattern.i;
+            try {
+                const rows = await this.dbEngine.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key]);
                 if (rows && rows.length > 0) {
+                    console.log(`MATCH FOUND! Pattern: ${pattern.name}, Key: ${key}`);
                     const blob = rows[0][0];
                     const url = URL.createObjectURL(new Blob([blob], { type: 'image/png' }));
                     tile.src = url;
-                    
-                    // Clean up URL when image loads
                     tile.onload = () => URL.revokeObjectURL(url);
                     done(null, tile);
-                } else {
-                    // No tile found in DB
-                    done(null, tile);
+                    return;
                 }
-            })
-            .catch(err => {
-                console.error(`Error fetching tile ${z}/${x}/${y}:`, err);
-                done(err, tile);
-            });
-            
-        return tile;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        // No match found
+        done(null, tile);
     },
 
     /**
