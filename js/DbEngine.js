@@ -3,8 +3,10 @@
  */
 export class DbEngine {
     constructor() {
-        this.sqlite3 = null;
+        this.dbName = 'Maidenhead_Cm96_Openstreetmap.htrx';
+        this.dbPath = `./maps/${this.dbName}`;
         this.db = null;
+        this.sqlite3 = null;
     }
 
     /**

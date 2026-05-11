@@ -17,6 +17,18 @@ class App {
     async init() {
         this.updateStatus("Booting Map...");
 
+        // Setup HUD Toggle
+        const hudToggle = document.getElementById('hud-toggle');
+        const overlay = document.getElementById('overlay');
+        if (hudToggle && overlay) {
+            this.isHudVisible = true;
+            hudToggle.addEventListener('click', () => {
+                this.isHudVisible = !this.isHudVisible;
+                overlay.style.display = this.isHudVisible ? 'block' : 'none';
+                hudToggle.style.background = this.isHudVisible ? "rgba(10, 132, 255, 0.3)" : "rgba(255,255,255,0.1)";
+            });
+        }
+
         // Setup Online Toggle
         const toggle = document.getElementById('online-toggle');
         if (toggle) {
@@ -81,23 +93,36 @@ class App {
             const coords = Maidenhead.toCoordinates(grid);
             if (coords) {
                 const [lat, lng] = coords;
+                const timestamp = Date.now();
                 const positions = JSON.parse(localStorage.getItem('sagPositions') || '{}');
-                positions[id] = { lat, lng, grid };
+                positions[id] = { lat, lng, grid, timestamp };
                 localStorage.setItem('sagPositions', JSON.stringify(positions));
                 
-                this.mapController.updateSagMarker(id, lat, lng, this.getSagColor(id));
+                this.mapController.updateSagMarker(id, lat, lng, this.getSagColor(id), grid, timestamp);
                 this.updateStatus(`${id} plotted at ${grid}`);
                 gridInput.value = '';
             } else {
                 alert("Invalid Grid Format. Use e.g. CM96dw");
             }
         });
+
+        // Add Enter Key Support
+        gridInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                updateBtn.click();
+            }
+        });
+
+        // Start Auto-Refresh for SAG Labels (every 60s)
+        setInterval(() => {
+            this.mapController.refreshSagLabels();
+        }, 60000);
     }
 
     restoreSagMarkers() {
         const positions = JSON.parse(localStorage.getItem('sagPositions') || '{}');
         Object.entries(positions).forEach(([id, data]) => {
-            this.mapController.updateSagMarker(id, data.lat, data.lng, this.getSagColor(id));
+            this.mapController.updateSagMarker(id, data.lat, data.lng, this.getSagColor(id), data.grid, data.timestamp);
         });
     }
 
@@ -115,7 +140,22 @@ class App {
     async initOfflineEngine() {
         try {
             this.updateStatus("Initializing Engine...");
-            await this.dbEngine.loadDb('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
+            
+            const filename = this.dbEngine.dbName;
+            let url = this.dbEngine.dbPath; // This is ./maps/Maidenhead...
+
+            // Check if local file exists
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                if (!response.ok) throw new Error("Local file not found");
+                console.log("Using local map database.");
+            } catch (e) {
+                // Fallback to GitHub Release Asset
+                url = `https://github.com/venamartin/maidenhead/releases/download/v1.0.0/${filename}`;
+                console.log("Local map not found. Fetching from GitHub Release...");
+            }
+
+            await this.dbEngine.loadDb(url, filename);
             
             this.updateStatus("Offline Tiles Active.");
             
@@ -127,7 +167,7 @@ class App {
             }
         } catch (err) {
             console.error("Offline engine error:", err);
-            this.updateStatus("Offline Unavailable (Memory Limit?)");
+            this.updateStatus("Offline Unavailable (No Map Data)");
         }
     }
 
