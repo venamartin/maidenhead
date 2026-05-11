@@ -17,21 +17,6 @@ class App {
     async init() {
         this.updateStatus("Booting Map...");
 
-        // Setup Tile Dump
-        const dumpBtn = document.getElementById('dump-tiles');
-        if (dumpBtn) {
-            dumpBtn.addEventListener('click', async () => {
-                try {
-                    const rows = await this.dbEngine.selectArrays("SELECT key FROM tiles LIMIT 50");
-                    console.log("Database Tile Keys (First 50):", rows.map(r => r[0]));
-                    alert("First 50 keys printed to console!");
-                } catch (e) {
-                    console.error(e);
-                    alert("Error dumping tiles: " + e.message);
-                }
-            });
-        }
-
         // Setup Online Toggle
 
         // Background Service Worker registration
