@@ -155,9 +155,9 @@ class App {
                 }
                 console.log(`Using local map database (${(size / 1024 / 1024).toFixed(1)} MB).`);
             } catch (e) {
-                // Fallback to GitHub Release Asset
-                url = `https://github.com/venamartin/maidenhead/releases/download/v1.0.0/${filename}`;
-                console.log("Local map is a pointer or missing. Fetching from GitHub Release...");
+                // Fallback to GitHub LFS Media Link (Required to get the real data instead of a pointer)
+                url = `https://media.githubusercontent.com/media/venamartin/maidenhead/main/maps/${filename}`;
+                console.log("Local map is a pointer or missing. Fetching from GitHub LFS Media...");
             }
 
             // Perform the load with progress tracking
