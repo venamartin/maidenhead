@@ -4,12 +4,22 @@ class App {
     }
 
     async init() {
+        // Detects if device is in standalone mode
+        const isInStandaloneMode = () => 
+            ('standalone' in window.navigator && window.navigator.standalone) || 
+            window.matchMedia('(display-mode: standalone)').matches;
+
         // Register the Service Worker
         if ('serviceWorker' in navigator) {
             try {
                 const registration = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered successfully:', registration.scope);
-                document.getElementById('status').innerText = "Maidenhead Ready.\nInstall from Share Menu (iOS) or Prompt (Android).";
+                
+                let statusText = "Maidenhead Ready.";
+                if (!isInStandaloneMode()) {
+                    statusText += "\nInstall from Share Menu (iOS) or Prompt (Android).";
+                }
+                document.getElementById('status').innerText = statusText;
             } catch (error) {
                 console.error('Service Worker registration failed:', error);
                 document.getElementById('status').innerText = "Service Worker Error.";
@@ -18,19 +28,16 @@ class App {
             document.getElementById('status').innerText = "Service Workers not supported in this browser.";
         }
         
-        this.checkIosInstall();
+        this.checkIosInstall(isInStandaloneMode);
     }
 
-    checkIosInstall() {
+    checkIosInstall(isInStandaloneMode) {
         // Detects if device is on iOS 
         const isIos = () => {
             const userAgent = window.navigator.userAgent.toLowerCase();
             return /iphone|ipad|ipod/.test(userAgent);
         };
         
-        // Detects if device is in standalone mode
-        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
-
         // Show the popup if on iOS and not already installed
         if (isIos() && !isInStandaloneMode()) {
             setTimeout(() => {
