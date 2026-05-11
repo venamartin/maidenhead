@@ -18,9 +18,17 @@ export default class GeoTracker {
             timeout: 10000            // Waits 10 seconds before throwing a timeout error
         };
 
-        // watchPosition fires continuously as the user moves
-        this.watchId = navigator.geolocation.watchPosition(
-            (position) => this.handleSuccess(position),
+        // On Android/iOS, calling getCurrentPosition first is often more reliable for triggering the prompt
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this.handleSuccess(position);
+                // After the first success, start the continuous watch
+                this.watchId = navigator.geolocation.watchPosition(
+                    (pos) => this.handleSuccess(pos),
+                    (err) => this.handleError(err),
+                    options
+                );
+            },
             (error) => this.handleError(error),
             options
         );

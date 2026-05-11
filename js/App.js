@@ -255,11 +255,12 @@ class App {
      */
     handleNewPosition(data, isStale = false) {
         // data contains {lat, lon, accuracy, heading, speed}
-        const { lat, lon } = data;
+        const { lat, lon, accuracy } = data;
 
         // Update Dashboard
         document.getElementById('dash-lat').innerText = lat.toFixed(5);
         document.getElementById('dash-lon').innerText = lon.toFixed(5);
+        document.getElementById('dash-acc').innerText = Math.round(accuracy || 0);
 
         // Update Map Center and User Marker
         this.mapController.updatePosition(lat, lon);
