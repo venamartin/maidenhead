@@ -95,7 +95,7 @@ L.SqliteTileLayer = L.TileLayer.extend({
             return tile;
         }
 
-        this.dbEngine.db.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key])
+        this.dbEngine.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key])
             .then(rows => {
                 if (rows && rows.length > 0) {
                     const blob = rows[0][0];

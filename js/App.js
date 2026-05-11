@@ -53,23 +53,9 @@ class App {
 
     async initOfflineEngine() {
         try {
-            this.updateStatus("Checking Offline Engine...");
-            await this.dbEngine.init();
-
-            // Check if file already exists in OPFS
-            const root = await navigator.storage.getDirectory();
-            let exists = false;
-            try {
-                await root.getFileHandle('cm96.sqlite');
-                exists = true;
-            } catch (e) {}
-
-            if (!exists) {
-                this.updateStatus("Downloading Map Data (16MB)...");
-                await this.dbEngine.importToOpfs('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
-            }
+            this.updateStatus("Initializing Engine...");
+            await this.dbEngine.loadDb('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
             
-            await this.dbEngine.openOpfsDb('cm96.sqlite');
             this.updateStatus("Offline Tiles Active.");
             
             // Refresh map to load the newly available tiles
@@ -80,7 +66,7 @@ class App {
             }
         } catch (err) {
             console.error("Offline engine error:", err);
-            this.updateStatus("Offline Mode Unavailable.");
+            this.updateStatus("Offline Unavailable (Memory Limit?)");
         }
     }
 
