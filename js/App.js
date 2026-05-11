@@ -13,6 +13,7 @@ class App {
         this.dbEngine = new DbEngine();
         this.mapController = new MapController(this.dbEngine);
         this.isOnline = false;
+        this.deferredPrompt = null; // Used for Android Install
         this.init();
     }
 
@@ -76,7 +77,49 @@ class App {
         // 3. Initialize Offline Engine (Background)
         this.initOfflineEngine();
 
+        // 4. Setup PWA Install Button
+        this.setupInstallButton();
+
         this.checkIosInstall();
+    }
+
+    setupInstallButton() {
+        const installBtn = document.getElementById('install-btn');
+        const iosPopup = document.getElementById('ios-install-popup');
+
+        // Android: Catch the 'beforeinstallprompt' event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log("PWA Install prompt available.");
+            e.preventDefault();
+            this.deferredPrompt = e;
+            if (installBtn) installBtn.style.display = 'inline-block';
+        });
+
+        // iOS: Show button if in Safari but not installed
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+        const isStandalone = ('standalone' in window.navigator && window.navigator.standalone) ||
+            window.matchMedia('(display-mode: standalone)').matches;
+
+        if (isIos && !isStandalone && installBtn) {
+            installBtn.style.display = 'inline-block';
+        }
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (this.deferredPrompt) {
+                    // Trigger Android Prompt
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    this.deferredPrompt = null;
+                } else if (isIos && iosPopup) {
+                    // Show iOS Instructions
+                    iosPopup.classList.add('show');
+                }
+            });
+        }
     }
 
     setupGpsTrigger() {
