@@ -17,16 +17,22 @@ class App {
     async init() {
         this.updateStatus("Booting Map...");
 
-        // Setup Online Toggle
-        const toggle = document.getElementById('online-toggle');
-        if (toggle) {
-            toggle.addEventListener('click', () => {
-                this.isOnline = !this.isOnline;
-                this.mapController.toggleOnline(this.isOnline);
-                toggle.innerText = this.isOnline ? "Go Offline" : "Go Online";
-                toggle.style.background = this.isOnline ? "rgba(10, 132, 255, 0.3)" : "rgba(255,255,255,0.1)";
+        // Setup Tile Dump
+        const dumpBtn = document.getElementById('dump-tiles');
+        if (dumpBtn) {
+            dumpBtn.addEventListener('click', async () => {
+                try {
+                    const rows = await this.dbEngine.selectArrays("SELECT key FROM tiles LIMIT 50");
+                    console.log("Database Tile Keys (First 50):", rows.map(r => r[0]));
+                    alert("First 50 keys printed to console!");
+                } catch (e) {
+                    console.error(e);
+                    alert("Error dumping tiles: " + e.message);
+                }
             });
         }
+
+        // Setup Online Toggle
 
         // Background Service Worker registration
         if ('serviceWorker' in navigator) {
