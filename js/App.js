@@ -14,64 +14,62 @@ class App {
     }
 
     async init() {
-        this.updateStatus("Registering Service Worker...");
+        this.updateStatus("Booting Map...");
 
-        // Register the Service Worker for Offline PWA support
+        // Background Service Worker registration
         if ('serviceWorker' in navigator) {
-            try {
-                const registration = await navigator.serviceWorker.register('./sw.js');
-                console.log('Service Worker registered successfully:', registration.scope);
-            } catch (error) {
-                console.error('Service Worker registration failed:', error);
-            }
+            navigator.serviceWorker.register('./sw.js').catch(e => console.error(e));
         }
 
-        this.updateStatus("Initializing Offline Engine...");
-
+        // 1. Initialize Map IMMEDIATELY (with a default view for PC testing)
         try {
-            // 1. Initialize SQLite WASM
-            this.updateStatus("Loading SQLite WASM...");
+            this.mapController.init('map');
+            this.updateStatus("Map Ready. Locating...");
+        } catch (err) {
+            console.error("Map init error:", err);
+            this.updateStatus("Map Error: " + err.message);
+        }
+
+        // 2. Start Geo Tracking (Background)
+        this.startTracking();
+
+        // 3. Initialize Offline Engine (Background)
+        this.initOfflineEngine();
+        
+        this.checkIosInstall();
+    }
+
+    async initOfflineEngine() {
+        try {
+            this.updateStatus("Checking Offline Engine...");
             await this.dbEngine.init();
 
-            // 2. Import the grid database to OPFS
-            this.updateStatus("Checking Local Database...");
-            
-            // Check if file already exists in OPFS to avoid re-downloading 16MB every time
+            // Check if file already exists in OPFS
             const root = await navigator.storage.getDirectory();
             let exists = false;
             try {
                 await root.getFileHandle('cm96.sqlite');
                 exists = true;
-                this.updateStatus("Database Found Locally.");
-            } catch (e) {
-                this.updateStatus("Downloading Map (16MB)...");
-            }
+            } catch (e) {}
 
             if (!exists) {
+                this.updateStatus("Downloading Map Data (16MB)...");
                 await this.dbEngine.importToOpfs('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
             }
             
             await this.dbEngine.openOpfsDb('cm96.sqlite');
-            this.updateStatus("Offline Engine Ready.");
+            this.updateStatus("Offline Tiles Active.");
+            
+            // Refresh map to load the newly available tiles
+            if (this.mapController.map) {
+                this.mapController.map.eachLayer(l => {
+                    if (l instanceof L.SqliteTileLayer) l.redraw();
+                });
+            }
         } catch (err) {
-            console.error("Database initialization error:", err);
-            this.updateStatus("Offline Mode Unavailable: " + err.message);
-            // We continue anyway so the GPS still works even without the map
+            console.error("Offline engine error:", err);
+            this.updateStatus("Offline Mode Unavailable.");
         }
-
-        try {
-            // 3. Initialize Map
-            this.mapController.init('map');
-            this.updateStatus("Map Initialized.");
-
-            // 4. Start Geo Tracking
-            this.startTracking();
-        } catch (err) {
-            console.error("UI/GPS initialization error:", err);
-            this.updateStatus("Critical Error: " + err.message);
-        }
-        
-        this.checkIosInstall();
     }
 
     /**

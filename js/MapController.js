@@ -12,6 +12,8 @@ export class MapController {
      * Initialize the map.
      */
     init(containerId) {
+        console.log('Initializing Leaflet map on container:', containerId);
+        
         // Initialize Leaflet Map
         this.map = L.map(containerId, {
             zoomControl: false,
@@ -20,10 +22,17 @@ export class MapController {
             zoom: 12
         });
 
-        // Add custom SQLite Layer
+        // 1. Add Online Fallback Layer (so we see SOMETHING while DB loads)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            opacity: 0.5 // Dim it so we can see our offline tiles clearly over it
+        }).addTo(this.map);
+
+        // 2. Add custom SQLite Layer
+        console.log('Adding SQLite tile layer...');
         const sqliteLayer = new L.SqliteTileLayer(this.dbEngine, {
             minZoom: 1,
-            maxZoom: 15
+            maxZoom: 15,
+            zIndex: 10 // Ensure it sits on top of the online map
         });
         sqliteLayer.addTo(this.map);
 
