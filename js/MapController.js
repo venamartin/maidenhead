@@ -74,6 +74,11 @@ L.SqliteTileLayer = L.TileLayer.extend({
         const i = this._encodeMorton(x, y);
         const key = offset + i;
 
+        if (!this.dbEngine.db) {
+            done(null, tile);
+            return tile;
+        }
+
         this.dbEngine.db.selectArrays('SELECT tile FROM tiles WHERE key = ?', [key])
             .then(rows => {
                 if (rows && rows.length > 0) {

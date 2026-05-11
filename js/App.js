@@ -30,24 +30,45 @@ class App {
 
         try {
             // 1. Initialize SQLite WASM
+            this.updateStatus("Loading SQLite WASM...");
             await this.dbEngine.init();
 
             // 2. Import the grid database to OPFS
-            // Note: In production, this would be triggered by a "Download" button.
-            // For this phase, we'll auto-import the local file into OPFS if not already there.
-            await this.dbEngine.importToOpfs('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
-            await this.dbEngine.openOpfsDb('cm96.sqlite');
+            this.updateStatus("Checking Local Database...");
+            
+            // Check if file already exists in OPFS to avoid re-downloading 16MB every time
+            const root = await navigator.storage.getDirectory();
+            let exists = false;
+            try {
+                await root.getFileHandle('cm96.sqlite');
+                exists = true;
+                this.updateStatus("Database Found Locally.");
+            } catch (e) {
+                this.updateStatus("Downloading Map (16MB)...");
+            }
 
-            // 3. Initialize Map with the SQLite Layer
+            if (!exists) {
+                await this.dbEngine.importToOpfs('./Maidenhead_Cm96_Openstreetmap.htrx', 'cm96.sqlite');
+            }
+            
+            await this.dbEngine.openOpfsDb('cm96.sqlite');
+            this.updateStatus("Offline Engine Ready.");
+        } catch (err) {
+            console.error("Database initialization error:", err);
+            this.updateStatus("Offline Mode Unavailable: " + err.message);
+            // We continue anyway so the GPS still works even without the map
+        }
+
+        try {
+            // 3. Initialize Map
             this.mapController.init('map');
+            this.updateStatus("Map Initialized.");
 
             // 4. Start Geo Tracking
             this.startTracking();
-
-            this.updateStatus("System Online.");
         } catch (err) {
-            console.error("Initialization error:", err);
-            this.updateStatus("Engine Error: " + err.message);
+            console.error("UI/GPS initialization error:", err);
+            this.updateStatus("Critical Error: " + err.message);
         }
         
         this.checkIosInstall();
