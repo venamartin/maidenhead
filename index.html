@@ -22,8 +22,11 @@
     <link rel="stylesheet" href="js/lib/leaflet.css">
     <script src="js/lib/leaflet.js"></script>
 
-    <!-- COOP/COEP Header Helper for GitHub Pages (Required for SQLite WASM) -->
-    <script src="https://cdn.jsdelivr.net/gh/gzuidhof/coi-serviceworker@latest/coi-serviceworker.min.js"></script>
+    <!-- COOP/COEP Header Helper (Required for SQLite WASM on GitHub Pages/Localhost) -->
+    <script src="coi-serviceworker.js"></script>
+
+    <!-- SQLite WASM Library (Non-module version) -->
+    <script src="js/lib/sqlite3.js"></script>
 
     <style>
         body {
@@ -194,6 +197,7 @@
 
     <div id="status-bar">
         <span id="status">Booting Maidenhead...</span>
+        <button id="online-toggle" style="margin-left: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">Go Online</button>
     </div>
 
     <!-- iOS Install Popup -->

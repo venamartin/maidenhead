@@ -22,29 +22,36 @@ export class MapController {
             zoom: 12
         });
 
-        // 1. Add Online Fallback Layer (so we see SOMETHING while DB loads)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            opacity: 0.5 // Dim it so we can see our offline tiles clearly over it
-        }).addTo(this.map);
+        // 1. Online Layer (Off by default)
+        this.onlineLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
 
-        // 2. Add custom SQLite Layer
+        // 2. Add custom SQLite Layer (Main Offline Layer)
         console.log('Adding SQLite tile layer...');
-        const sqliteLayer = new L.SqliteTileLayer(this.dbEngine, {
+        this.sqliteLayer = new L.SqliteTileLayer(this.dbEngine, {
             minZoom: 1,
             maxZoom: 15,
-            zIndex: 10 // Ensure it sits on top of the online map
+            zIndex: 10
         });
-        sqliteLayer.addTo(this.map);
+        this.sqliteLayer.addTo(this.map);
 
         // Add User Marker
         const icon = L.divIcon({
             className: 'user-marker',
-            html: '<div style="background: #0A84FF; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
+            html: '<div style="background: #0A84FF; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px #0A84FF;"></div>',
             iconSize: [12, 12]
         });
-        this.userMarker = L.marker([0, 0], { icon }).addTo(this.map);
+        this.userMarker = L.marker([36.5, -121.0], { icon }).addTo(this.map);
+    }
 
-        console.log('Map initialized with SQLite layer.');
+    /**
+     * Toggle the online OpenStreetMap layer.
+     */
+    toggleOnline(enabled) {
+        if (enabled) {
+            this.onlineLayer.addTo(this.map);
+        } else {
+            this.map.removeLayer(this.onlineLayer);
+        }
     }
 
     /**

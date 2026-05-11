@@ -10,11 +10,23 @@ class App {
     constructor() {
         this.dbEngine = new DbEngine();
         this.mapController = new MapController(this.dbEngine);
+        this.isOnline = false;
         this.init();
     }
 
     async init() {
         this.updateStatus("Booting Map...");
+
+        // Setup Online Toggle
+        const toggle = document.getElementById('online-toggle');
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                this.isOnline = !this.isOnline;
+                this.mapController.toggleOnline(this.isOnline);
+                toggle.innerText = this.isOnline ? "Go Offline" : "Go Online";
+                toggle.style.background = this.isOnline ? "rgba(10, 132, 255, 0.3)" : "rgba(255,255,255,0.1)";
+            });
+        }
 
         // Background Service Worker registration
         if ('serviceWorker' in navigator) {

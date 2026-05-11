@@ -1,5 +1,3 @@
-import sqlite3InitModule from './lib/sqlite3.js';
-
 /**
  * SQLite3 WASM and OPFS Engine.
  */
@@ -16,7 +14,10 @@ export class DbEngine {
         if (this.sqlite3) return;
 
         try {
-            this.sqlite3 = await sqlite3InitModule({
+            this.sqlite3 = await globalThis.sqlite3InitModule({
+                locateFile: (file) => {
+                    return `js/lib/${file}`;
+                },
                 print: console.log,
                 printErr: console.error,
             });

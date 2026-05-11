@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maidenhead-shell-v3';
+const CACHE_NAME = 'maidenhead-shell-v4';
 const ASSETS = [
     './',
     './index.html',
