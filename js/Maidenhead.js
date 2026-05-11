@@ -84,6 +84,7 @@ export class Maidenhead {
             minLon: lon,
             maxLon: lon + 2
         };
+    }
     /**
      * Convert a Maidenhead locator to Latitude/Longitude (center of the square).
      * @param {string} locator 
