@@ -142,22 +142,16 @@ class App {
             this.updateStatus("Initializing Engine...");
             
             const filename = this.dbEngine.dbName;
-            let url = this.dbEngine.dbPath; // This is ./maps/Maidenhead...
+            let url;
 
-            // Check if local file exists AND is the real deal (not an LFS pointer)
-            try {
-                const response = await fetch(url, { method: 'HEAD' });
-                const size = parseInt(response.headers.get('Content-Length') || '0');
-                
-                // If it's less than 1MB, it's almost certainly an LFS pointer or error page
-                if (!response.ok || size < 1024 * 1024) {
-                    throw new Error("Local map is just a pointer or missing");
-                }
-                console.log(`Using local map database (${(size / 1024 / 1024).toFixed(1)} MB).`);
-            } catch (e) {
-                // Fallback to GitHub LFS Media Link (Required to get the real data instead of a pointer)
+            // SMART ROUTING: Use local file for dev, but FORCE Media link for live site
+            // This bypasses the GitHub "LFS Pointer" trickery on the live site.
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                url = `./maps/${filename}`;
+                console.log("Local Dev: Attempting to load map from /maps/...");
+            } else {
                 url = `https://media.githubusercontent.com/media/venamartin/maidenhead/main/maps/${filename}`;
-                console.log("Local map is a pointer or missing. Fetching from GitHub LFS Media...");
+                console.log("Live Site: Loading map from GitHub LFS Media...");
             }
 
             // Perform the load with progress tracking
