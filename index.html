@@ -71,9 +71,10 @@
             -webkit-backdrop-filter: blur(10px);
             padding: 20px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            pointer-events: auto; /* Enable interaction for the card if needed */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+            /* Enable interaction for the card if needed */
         }
 
         #grid-text {
@@ -91,7 +92,7 @@
             font-weight: 700;
             line-height: 1.4;
             letter-spacing: 1.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         #status-bar {
@@ -102,13 +103,18 @@
             z-index: 100;
             text-align: center;
             font-size: 12px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             pointer-events: none;
         }
 
         /* Leaflet Overrides */
-        .leaflet-container { background: #121212 !important; }
-        .user-marker { filter: drop-shadow(0 0 5px rgba(10, 132, 255, 0.5)); }
+        .leaflet-container {
+            background: #121212 !important;
+        }
+
+        .user-marker {
+            filter: drop-shadow(0 0 5px rgba(10, 132, 255, 0.5));
+        }
 
         /* iOS Install Popup Styles */
         #ios-install-popup {
@@ -151,7 +157,7 @@
         }
 
         .ios-close-btn {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             color: rgba(255, 255, 255, 0.8);
             font-size: 20px;
@@ -167,7 +173,7 @@
         }
 
         .ios-close-btn:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
 
@@ -183,7 +189,8 @@
             display: block;
             width: 0;
         }
-            #sag-card {
+
+        #sag-card {
             position: absolute;
             bottom: 60px;
             left: 20px;
@@ -232,8 +239,19 @@
 
         /* Responsive adjustments */
         @media (max-width: 600px) {
-            #grid-card { top: 10px; left: 10px; right: 10px; width: auto; }
-            #sag-card { left: 10px; right: 10px; width: auto; bottom: 50px; }
+            #grid-card {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+            }
+
+            #sag-card {
+                left: 10px;
+                right: 10px;
+                width: auto;
+                bottom: 50px;
+            }
         }
     </style>
 </head>
@@ -252,7 +270,9 @@
 
     <!-- SAG Vehicle Entry -->
     <div id="sag-card" class="glass-card">
-        <div class="card-header" style="font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">SAG VEHICLE ENTRY</div>
+        <div class="card-header"
+            style="font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 5px;">SAG VEHICLE
+            ENTRY</div>
         <div class="sag-form">
             <select id="sag-select">
                 <!-- Will be populated by JS -->
@@ -264,17 +284,25 @@
 
     <div id="status-bar">
         <span id="status">Booting Maidenhead...</span>
-        <button id="hud-toggle" style="margin-left: 10px; background: rgba(10, 132, 255, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">HUD</button>
-        <button id="online-toggle" style="margin-left: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">Go Online</button>
+        <button id="hud-toggle"
+            style="margin-left: 10px; background: rgba(10, 132, 255, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">HUD</button>
+        <button id="online-toggle"
+            style="margin-left: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">Go
+            Online</button>
     </div>
 
     <!-- iOS Install Popup -->
     <div id="ios-install-popup">
         <div class="ios-install-content">
             <strong>Install Maidenhead</strong>
-            Tap <svg style="display:inline; width:18px; height:18px; vertical-align:middle; margin: 0 4px;" viewBox="0 0 50 50"><path fill="none" stroke="#0A84FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M25,32 V10 M15,20 L25,10 L35,20 M12,30 V40 H38 V30"/></svg> and select <em>Add to Home Screen</em>.
+            Tap <svg style="display:inline; width:18px; height:18px; vertical-align:middle; margin: 0 4px;"
+                viewBox="0 0 50 50">
+                <path fill="none" stroke="#0A84FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                    d="M25,32 V10 M15,20 L25,10 L35,20 M12,30 V40 H38 V30" />
+            </svg> and select <em>Add to Home Screen</em>.
         </div>
-        <button class="ios-close-btn" onclick="document.getElementById('ios-install-popup').classList.remove('show')">&times;</button>
+        <button class="ios-close-btn"
+            onclick="document.getElementById('ios-install-popup').classList.remove('show')">&times;</button>
     </div>
 
     <!-- Import the main orchestrator as an ES6 Module -->

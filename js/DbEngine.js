@@ -34,29 +34,52 @@ export class DbEngine {
      * Imports a remote file and opens it. Uses OPFS if available, otherwise falls back to Memory.
      * @param {string} url - Remote URL.
      * @param {string} filename - Local filename for OPFS.
+     * @param {function} onProgress - Callback for progress (0-1).
      */
-    async loadDb(url, filename) {
+    async loadDb(url, filename, onProgress) {
         await this.init();
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
+
+        const contentLength = +response.headers.get('Content-Length');
+        const reader = response.body.getReader();
+        let receivedLength = 0; 
+        let chunks = []; 
+
+        while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            if (contentLength && onProgress) {
+                onProgress(receivedLength / contentLength, receivedLength, contentLength);
+            }
+        }
+
+        const uint8Array = new Uint8Array(receivedLength);
+        let position = 0;
+        for(let chunk of chunks) {
+            uint8Array.set(chunk, position);
+            position += chunk.length;
+        }
+
+        if (uint8Array.byteLength < 1000) {
+             const text = new TextDecoder().decode(uint8Array);
+             if (text.includes('version https://git-lfs.github.com/spec/v1')) {
+                 throw new Error("LFS Pointer Detected! Use 'git lfs pull' or check your download URL.");
+             }
+        }
 
         // 1. Try to use OPFS for persistence
         if (this.sqlite3.oo1.OpfsDb) {
             try {
-                console.log("Attempting to use OPFS storage...");
+                console.log("Saving database to OPFS...");
                 const root = await navigator.storage.getDirectory();
-                let exists = false;
-                try {
-                    await root.getFileHandle(filename);
-                    exists = true;
-                } catch (e) {}
-
-                if (!exists) {
-                    const response = await fetch(url);
-                    const buffer = await response.arrayBuffer();
-                    const fileHandle = await root.getFileHandle(filename, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(buffer);
-                    await writable.close();
-                }
+                const fileHandle = await root.getFileHandle(filename, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(uint8Array);
+                await writable.close();
 
                 this.db = new this.sqlite3.oo1.OpfsDb(filename);
                 console.log(`Database ${filename} opened via OPFS.`);
@@ -66,13 +89,8 @@ export class DbEngine {
             }
         }
 
-        // 2. Fallback: Load directly into memory (works on localhost/HTTP)
+        // 2. Fallback: Load directly into memory
         try {
-            console.log("Loading database into Memory fallback...");
-            const response = await fetch(url);
-            const buffer = await response.arrayBuffer();
-            const uint8Array = new Uint8Array(buffer);
-            
             this.db = new this.sqlite3.oo1.DB();
             const p = this.sqlite3.wasm.allocFromTypedArray(uint8Array);
             const rc = this.sqlite3.capi.sqlite3_deserialize(

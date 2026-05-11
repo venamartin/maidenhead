@@ -150,12 +150,18 @@ class App {
                 if (!response.ok) throw new Error("Local file not found");
                 console.log("Using local map database.");
             } catch (e) {
-                // Fallback to GitHub Release Asset
+                // Fallback to GitHub Release Asset (LFS raw links are just pointers)
                 url = `https://github.com/venamartin/maidenhead/releases/download/v1.0.0/${filename}`;
                 console.log("Local map not found. Fetching from GitHub Release...");
             }
 
-            await this.dbEngine.loadDb(url, filename);
+            // Perform the load with progress tracking
+            await this.dbEngine.loadDb(url, filename, (progress, received, total) => {
+                const percent = Math.round(progress * 100);
+                const receivedMB = (received / 1024 / 1024).toFixed(1);
+                const totalMB = (total / 1024 / 1024).toFixed(1);
+                this.updateStatus(`Downloading Map: ${percent}% (${receivedMB}MB / ${totalMB}MB)`);
+            });
             
             this.updateStatus("Offline Tiles Active.");
             
@@ -167,7 +173,7 @@ class App {
             }
         } catch (err) {
             console.error("Offline engine error:", err);
-            this.updateStatus("Offline Unavailable (No Map Data)");
+            this.updateStatus("GPS Active (Map Offline)");
         }
     }
 
@@ -180,24 +186,44 @@ class App {
             return;
         }
 
-        navigator.geolocation.watchPosition(
-            (pos) => this.handleNewPosition(pos),
-            (err) => {
-                console.error("GPS Error:", err);
-                this.updateStatus("GPS Error: " + err.message);
-            },
-            { 
-                enableHighAccuracy: true, 
-                maximumAge: 1000,
-                timeout: 10000
+        // Restore Last Known Position immediately
+        const lastPos = JSON.parse(localStorage.getItem('lastPosition') || 'null');
+        if (lastPos) {
+            this.handleNewPosition({ coords: lastPos }, true);
+        }
+
+        const options = { 
+            enableHighAccuracy: true, 
+            maximumAge: 0,
+            timeout: 10000
+        };
+
+        const success = (pos) => {
+            localStorage.setItem('lastPosition', JSON.stringify({
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude
+            }));
+            this.handleNewPosition(pos);
+        };
+
+        const error = (err) => {
+            console.warn("GPS High Accuracy Error:", err.message);
+            // Fallback to standard accuracy if high accuracy fails
+            if (options.enableHighAccuracy) {
+                options.enableHighAccuracy = false;
+                navigator.geolocation.watchPosition(success, (e) => {
+                    this.updateStatus("GPS Error: " + e.message);
+                }, options);
             }
-        );
+        };
+
+        navigator.geolocation.watchPosition(success, error, options);
     }
 
     /**
      * Handle incoming GPS coordinates.
      */
-    handleNewPosition(pos) {
+    handleNewPosition(pos, isStale = false) {
         const { latitude, longitude } = pos.coords;
         
         // Update Map Center and User Marker
@@ -208,16 +234,20 @@ class App {
         
         // Format for UI: Prefix (4 chars) and Suffix (6 chars)
         const prefix = locator.substring(0, 4).toUpperCase();
-        const suffix = locator.substring(4); // e.g. "dw00qi"
+        const suffix = locator.substring(4); 
         
         // Update Display
         document.getElementById('grid-text').innerText = `${prefix} ${suffix}`;
         
-        // Translate the suffix (the detailed part) to NATO phonetics
+        // Translate the suffix to NATO phonetics
         const phoneticList = Phonetics.translate(suffix);
         document.getElementById('phonetic-text').innerText = phoneticList.join(' · ');
         
-        this.updateStatus("Location Updated.");
+        if (isStale) {
+            this.updateStatus("Locating (Last Position Shown)");
+        } else {
+            this.updateStatus("GPS Active");
+        }
     }
 
     /**
