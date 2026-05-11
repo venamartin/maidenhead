@@ -144,15 +144,20 @@ class App {
             const filename = this.dbEngine.dbName;
             let url = this.dbEngine.dbPath; // This is ./maps/Maidenhead...
 
-            // Check if local file exists
+            // Check if local file exists AND is the real deal (not an LFS pointer)
             try {
                 const response = await fetch(url, { method: 'HEAD' });
-                if (!response.ok) throw new Error("Local file not found");
-                console.log("Using local map database.");
+                const size = parseInt(response.headers.get('Content-Length') || '0');
+                
+                // If it's less than 1MB, it's almost certainly an LFS pointer or error page
+                if (!response.ok || size < 1024 * 1024) {
+                    throw new Error("Local map is just a pointer or missing");
+                }
+                console.log(`Using local map database (${(size / 1024 / 1024).toFixed(1)} MB).`);
             } catch (e) {
-                // Fallback to GitHub Release Asset (LFS raw links are just pointers)
+                // Fallback to GitHub Release Asset
                 url = `https://github.com/venamartin/maidenhead/releases/download/v1.0.0/${filename}`;
-                console.log("Local map not found. Fetching from GitHub Release...");
+                console.log("Local map is a pointer or missing. Fetching from GitHub Release...");
             }
 
             // Perform the load with progress tracking
