@@ -2,6 +2,7 @@ import { DbEngine } from './DbEngine.js';
 import { MapController } from './MapController.js';
 import { Maidenhead } from './Maidenhead.js';
 import { Phonetics } from './Phonetics.js';
+import GeoTracker from './GeoTracker.js';
 
 /**
  * Main Application Orchestrator.
@@ -60,13 +61,32 @@ class App {
             this.updateStatus("Map Error: " + err.message);
         }
 
-        // 2. Start Geo Tracking (Background)
-        this.startTracking();
+        // 2. Setup GPS Trigger (Mobile Security Golden Rule)
+        this.setupGpsTrigger();
 
         // 3. Initialize Offline Engine (Background)
         this.initOfflineEngine();
         
         this.checkIosInstall();
+    }
+
+    setupGpsTrigger() {
+        const startBtn = document.getElementById('gps-start-btn');
+        const dashboard = document.getElementById('coord-dashboard');
+
+        this.geoTracker = new GeoTracker(
+            (data) => this.handleNewPosition(data),
+            (err) => this.updateStatus(err)
+        );
+
+        if (startBtn) {
+            startBtn.addEventListener('click', () => {
+                this.geoTracker.start();
+                startBtn.style.display = 'none';
+                if (dashboard) dashboard.style.display = 'block';
+                this.updateStatus("GPS Request Sent...");
+            });
+        }
     }
 
     setupSagTracker() {
@@ -176,60 +196,24 @@ class App {
         }
     }
 
-    /**
-     * Start watching the device's physical location.
-     */
-    startTracking() {
-        if (!navigator.geolocation) {
-            this.updateStatus("Geolocation not supported by this browser.");
-            return;
-        }
 
-        // Restore Last Known Position immediately
-        const lastPos = JSON.parse(localStorage.getItem('lastPosition') || 'null');
-        if (lastPos) {
-            this.handleNewPosition({ coords: lastPos }, true);
-        }
-
-        const options = { 
-            enableHighAccuracy: true, 
-            maximumAge: 0,
-            timeout: 10000
-        };
-
-        const success = (pos) => {
-            localStorage.setItem('lastPosition', JSON.stringify({
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude
-            }));
-            this.handleNewPosition(pos);
-        };
-
-        const error = (err) => {
-            console.warn("GPS High Accuracy Error:", err.message);
-            // Fallback to standard accuracy if high accuracy fails
-            if (options.enableHighAccuracy) {
-                options.enableHighAccuracy = false;
-                navigator.geolocation.watchPosition(success, (e) => {
-                    this.updateStatus("GPS Error: " + e.message);
-                }, options);
-            }
-        };
-
-        navigator.geolocation.watchPosition(success, error, options);
-    }
 
     /**
-     * Handle incoming GPS coordinates.
+     * Handle incoming GPS coordinates from GeoTracker.
      */
-    handleNewPosition(pos, isStale = false) {
-        const { latitude, longitude } = pos.coords;
+    handleNewPosition(data, isStale = false) {
+        // data contains {lat, lon, accuracy, heading, speed}
+        const { lat, lon } = data;
         
+        // Update Dashboard
+        document.getElementById('dash-lat').innerText = lat.toFixed(5);
+        document.getElementById('dash-lon').innerText = lon.toFixed(5);
+
         // Update Map Center and User Marker
-        this.mapController.updatePosition(latitude, longitude);
+        this.mapController.updatePosition(lat, lon);
 
         // Calculate 10-character Maidenhead locator
-        const locator = Maidenhead.fromLatLon(latitude, longitude, 10);
+        const locator = Maidenhead.fromLatLon(lat, lon, 10);
         
         // Format for UI: Prefix (4 chars) and Suffix (6 chars)
         const prefix = locator.substring(0, 4).toUpperCase();

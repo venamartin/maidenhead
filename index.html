@@ -265,6 +265,13 @@
         <div id="grid-card" class="glass-card">
             <div id="grid-text">LOCATING...</div>
             <div id="phonetic-text">WAITING FOR GPS</div>
+            
+            <!-- Precision Dashboard -->
+            <div id="coord-dashboard" style="display: none; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); pt: 5px;">
+                LAT: <span id="dash-lat">0.00000</span> | LON: <span id="dash-lon">0.00000</span>
+            </div>
+
+            <button id="gps-start-btn" style="margin-top: 15px; background: #0A84FF; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; pointer-events: auto;">START TRACKING</button>
         </div>
     </div>
 
