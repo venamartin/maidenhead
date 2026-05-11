@@ -32,12 +32,96 @@
             overflow: hidden;
             /* Prevents bounce scrolling */
         }
+
+        /* iOS Install Popup Styles */
+        #ios-install-popup {
+            position: fixed;
+            bottom: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 350px;
+            background: rgba(40, 40, 40, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: #fff;
+            padding: 16px 20px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            z-index: 1000;
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #ios-install-popup.show {
+            bottom: 30px;
+        }
+
+        .ios-install-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .ios-install-content strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .ios-close-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .ios-close-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        /* Arrow pointing down */
+        #ios-install-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: rgba(40, 40, 40, 0.85) transparent transparent transparent;
+            display: block;
+            width: 0;
+        }
     </style>
 </head>
 
 <body>
 
     <h1 id="status">Booting Maidenhead...</h1>
+
+    <!-- iOS Install Popup -->
+    <div id="ios-install-popup">
+        <div class="ios-install-content">
+            <strong>Install Maidenhead</strong>
+            Tap <svg style="display:inline; width:18px; height:18px; vertical-align:middle; margin: 0 4px;" viewBox="0 0 50 50"><path fill="none" stroke="#0A84FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M25,32 V10 M15,20 L25,10 L35,20 M12,30 V40 H38 V30"/></svg> and select <em>Add to Home Screen</em>.
+        </div>
+        <button class="ios-close-btn" onclick="document.getElementById('ios-install-popup').classList.remove('show')">&times;</button>
+    </div>
 
     <!-- Import the main orchestrator as an ES6 Module -->
     <script type="module" src="./js/App.js"></script>
