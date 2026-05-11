@@ -265,13 +265,17 @@
         <div id="grid-card" class="glass-card">
             <div id="grid-text">LOCATING...</div>
             <div id="phonetic-text">WAITING FOR GPS</div>
-            
+
             <!-- Precision Dashboard -->
-            <div id="coord-dashboard" style="display: none; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); pt: 5px;">
+            <div id="coord-dashboard"
+                style="display: none; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); pt: 5px;">
                 LAT: <span id="dash-lat">0.00000</span> | LON: <span id="dash-lon">0.00000</span>
             </div>
 
-            <button id="gps-start-btn" style="margin-top: 15px; background: #0A84FF; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; pointer-events: auto;">START TRACKING</button>
+            <button id="gps-start-btn"
+                style="margin-top: 15px; background: #0A84FF; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; pointer-events: auto;">START
+                TRACKING</button>
+
         </div>
     </div>
 
@@ -291,8 +295,8 @@
 
     <div id="status-bar">
         <span id="status">Booting Maidenhead...</span>
-        <button id="hud-toggle"
-            style="margin-left: 10px; background: rgba(10, 132, 255, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">HUD</button>
+        <button id="wake-lock-btn" style="margin-left: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">Screen: AUTO DIM</button>
+        <button id="hud-toggle" style="margin-left: 10px; background: rgba(10, 132, 255, 0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">HUD</button>
         <button id="online-toggle"
             style="margin-left: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer; pointer-events: auto;">Go
             Online</button>

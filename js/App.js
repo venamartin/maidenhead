@@ -3,6 +3,7 @@ import { MapController } from './MapController.js';
 import { Maidenhead } from './Maidenhead.js';
 import { Phonetics } from './Phonetics.js';
 import GeoTracker from './GeoTracker.js';
+import WakeLock from './WakeLock.js';
 
 /**
  * Main Application Orchestrator.
@@ -41,6 +42,14 @@ class App {
             });
         }
 
+        const wakeBtn = document.getElementById('wake-lock-btn');
+        if (wakeBtn) {
+            this.screenLock = new WakeLock(wakeBtn);
+            wakeBtn.addEventListener('click', () => {
+                this.screenLock.toggle();
+            });
+        }
+
         // Setup SAG Tracker
         this.setupSagTracker();
 
@@ -53,7 +62,7 @@ class App {
         try {
             this.mapController.init('map');
             this.updateStatus("Map Ready. Locating...");
-            
+
             // Restore any saved SAG markers
             this.restoreSagMarkers();
         } catch (err) {
@@ -66,7 +75,7 @@ class App {
 
         // 3. Initialize Offline Engine (Background)
         this.initOfflineEngine();
-        
+
         this.checkIosInstall();
     }
 
@@ -117,7 +126,7 @@ class App {
                 const positions = JSON.parse(localStorage.getItem('sagPositions') || '{}');
                 positions[id] = { lat, lng, grid, timestamp };
                 localStorage.setItem('sagPositions', JSON.stringify(positions));
-                
+
                 this.mapController.updateSagMarker(id, lat, lng, this.getSagColor(id), grid, timestamp);
                 this.updateStatus(`${id} plotted at ${grid}`);
                 gridInput.value = '';
@@ -148,19 +157,19 @@ class App {
 
     getSagColor(id) {
         const colors = [
-            '#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', 
+            '#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA',
             '#007AFF', '#5856D6', '#FF2D55', '#AF52DE', '#8E8E93',
             '#FF375F', '#FFD60A', '#30D158', '#64D2FF', '#0A84FF',
             '#BF5AF2', '#FF64D2', '#5E5CE6', '#98989D', '#636366'
         ];
-        const num = parseInt(id.replace('SAG','')) - 1;
+        const num = parseInt(id.replace('SAG', '')) - 1;
         return colors[num % colors.length];
     }
 
     async initOfflineEngine() {
         try {
             this.updateStatus("Initializing Engine...");
-            
+
             const filename = this.dbEngine.dbName;
             let url;
 
@@ -181,9 +190,9 @@ class App {
                 const totalMB = (total / 1024 / 1024).toFixed(1);
                 this.updateStatus(`Downloading Map: ${percent}% (${receivedMB}MB / ${totalMB}MB)`);
             });
-            
+
             this.updateStatus("Offline Tiles Active.");
-            
+
             // Refresh map to load the newly available tiles
             if (this.mapController.map) {
                 this.mapController.map.eachLayer(l => {
@@ -204,7 +213,7 @@ class App {
     handleNewPosition(data, isStale = false) {
         // data contains {lat, lon, accuracy, heading, speed}
         const { lat, lon } = data;
-        
+
         // Update Dashboard
         document.getElementById('dash-lat').innerText = lat.toFixed(5);
         document.getElementById('dash-lon').innerText = lon.toFixed(5);
@@ -214,18 +223,18 @@ class App {
 
         // Calculate 10-character Maidenhead locator
         const locator = Maidenhead.fromLatLon(lat, lon, 10);
-        
+
         // Format for UI: Prefix (4 chars) and Suffix (6 chars)
         const prefix = locator.substring(0, 4).toUpperCase();
-        const suffix = locator.substring(4); 
-        
+        const suffix = locator.substring(4);
+
         // Update Display
         document.getElementById('grid-text').innerText = `${prefix} ${suffix}`;
-        
+
         // Translate the suffix to NATO phonetics
         const phoneticList = Phonetics.translate(suffix);
         document.getElementById('phonetic-text').innerText = phoneticList.join(' · ');
-        
+
         if (isStale) {
             this.updateStatus("Locating (Last Position Shown)");
         } else {
@@ -249,8 +258,8 @@ class App {
             const userAgent = window.navigator.userAgent.toLowerCase();
             return /iphone|ipad|ipod/.test(userAgent);
         };
-        const isInStandaloneMode = () => ('standalone' in window.navigator && window.navigator.standalone) || 
-                                         window.matchMedia('(display-mode: standalone)').matches;
+        const isInStandaloneMode = () => ('standalone' in window.navigator && window.navigator.standalone) ||
+            window.matchMedia('(display-mode: standalone)').matches;
 
         if (isIos() && !isInStandaloneMode()) {
             setTimeout(() => {
