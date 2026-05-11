@@ -65,7 +65,7 @@
             text-align: center;
         }
 
-        .grid-card {
+        #grid-card {
             background: rgba(20, 20, 20, 0.8);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -73,6 +73,7 @@
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: auto; /* Enable interaction for the card if needed */
         }
 
         #grid-text {
@@ -241,9 +242,11 @@
     <div id="map"></div>
 
     <!-- Maidenhead Overlay -->
-    <div id="grid-card" class="glass-card">
-        <div id="grid-text">LOCATING...</div>
-        <div id="phonetic-text">WAITING FOR GPS</div>
+    <div id="overlay">
+        <div id="grid-card" class="glass-card">
+            <div id="grid-text">LOCATING...</div>
+            <div id="phonetic-text">WAITING FOR GPS</div>
+        </div>
     </div>
 
     <!-- SAG Vehicle Entry -->
